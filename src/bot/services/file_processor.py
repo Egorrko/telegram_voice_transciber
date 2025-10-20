@@ -1,6 +1,7 @@
 import sentry_sdk
 import os
 
+from aiogram.utils.formatting import BlockQuote, Pre
 from bot.bot_init import bot
 from config import settings
 import bot.messages as messages
@@ -30,6 +31,7 @@ async def handle_audio_file(message, hashed_user_id, file_duration, file_id, mim
                     settings.AVAILABLE_SECONDS,
                 )
             )
+        msg = await message.reply("Распознаю...")
 
         file_info = await bot.get_file(file_id)
         file = await bot.download_file(file_info.file_path)
@@ -37,13 +39,18 @@ async def handle_audio_file(message, hashed_user_id, file_duration, file_id, mim
         start_time = time.time()
         transcript = await transcription_client.transcribe(file, mime_type)
         transcription_time = time.time() - start_time
-        for i in range(0, len(transcript), settings.MAX_MESSAGE_LENGTH):
-            await message.reply(transcript[i : i + settings.MAX_MESSAGE_LENGTH])
+
+        if len(transcript) > settings.MAX_MESSAGE_LENGTH:
+            await msg.edit_text(**BlockQuote(transcript[:settings.MAX_MESSAGE_LENGTH]).as_kwargs())
+            for i in range(settings.MAX_MESSAGE_LENGTH, len(transcript), settings.MAX_MESSAGE_LENGTH):
+                await message.reply(**BlockQuote(transcript[i : i + settings.MAX_MESSAGE_LENGTH]).as_kwargs())
+        else:
+            await msg.edit_text(**BlockQuote(transcript).as_kwargs())
 
         await db.process_user_transcription(user, file_duration, transcription_time)
         await db.insert_transcription_log(user, file_duration, transcription_time)
     except Exception as e:
-        await message.reply(f"Ошибочка: {e}")
+        await msg.edit_text(**Pre(f"Ошибочка: {e[:settings.MAX_MESSAGE_LENGTH]}").as_kwargs())
         sentry_sdk.capture_exception(e)
         user, _ = await db.get_or_create_user(hashed_user_id)
         await db.insert_transcription_log(user, file_duration, -1)

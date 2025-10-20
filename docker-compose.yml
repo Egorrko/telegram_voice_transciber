@@ -4,28 +4,20 @@ services:
       context: telegram-bot-api
       args:
         - BUILD_CPU_COUNT=${BUILD_CPU_COUNT}
+    env_file: 
+      - .env
     environment:
-      - TELEGRAM_API_ID=${TELEGRAM_API_ID}
-      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH}
       - TELEGRAM_LOCAL=true
+    restart: always
     volumes:
       - telegram-bot-api-data:/var/lib/telegram-bot-api
-    restart: always
+
   goodsecretarybot:
-    build:
-      context: .
-    environment:
-      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
-      - TELEGRAM_BOT_API_URL=${TELEGRAM_BOT_API_URL}
-      - SENTRY_DSN=${SENTRY_DSN}
-      - TRANSCRIPTION_ENGINE=${TRANSCRIPTION_ENGINE}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
-      - BOT_USERNAME=${BOT_USERNAME}
-      - SUPPORT_USERNAME=${SUPPORT_USERNAME}
-      - AVAILABLE_MINUTES=${AVAILABLE_MINUTES}
-      - LEFT_WARNING_MINUTES=${LEFT_WARNING_MINUTES}
-      - CURRENCY_RATE=${CURRENCY_RATE}
+    build: .
+    entrypoint: ./entrypoint.sh
+    command: uv run src/manage.py runbot
+    env_file: 
+      - .env
     restart: always
     volumes:
       - telegram-bot-api-data:/var/lib/telegram-bot-api

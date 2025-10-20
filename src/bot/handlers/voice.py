@@ -14,7 +14,6 @@ router = Router()
 @router.message((F.chat.type == "private") & (F.voice))
 async def handle_voice(message: Message):
     hashed_user_id = hashlib.sha256(str(message.from_user.id).encode()).hexdigest()
-    print(message.voice)
     sentry_sdk.set_user({"id": hashed_user_id})
     await handle_audio_file(
         message,
@@ -28,7 +27,6 @@ async def handle_voice(message: Message):
 @router.message((F.chat.type == "private") & (F.audio))
 async def handle_audio(message: Message):
     hashed_user_id = hashlib.sha256(str(message.from_user.id).encode()).hexdigest()
-    print(message.audio)
     sentry_sdk.set_user({"id": hashed_user_id})
     await handle_audio_file(
         message,

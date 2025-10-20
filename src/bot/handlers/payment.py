@@ -5,6 +5,8 @@ from aiogram.filters import Command, CommandObject
 from aiogram.types import Message, PreCheckoutQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import LabeledPrice
+from aiogram.utils.formatting import Text, Code
+
 
 from bot.services import db
 from bot import messages
@@ -20,7 +22,13 @@ async def payment(message: Message, command: CommandObject):
         or not command.args.isdigit()
         or not 1 <= int(command.args) <= 2500
     ):
-        await message.reply("Пожалуйста, введите количество звезд от 1 до 2500.")
+        await message.reply(
+            **Text(
+                "Пожалуйста, вызовите команду ",
+                Code("/payment N"),
+                " с количеством звезд от 1 до 2500",
+            ).as_kwargs()
+        )
         return
     amount = int(command.args)
     amount_in_minutes = amount * int(settings.CURRENCY_RATE_SECONDS / 60)

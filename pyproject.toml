@@ -9,6 +9,7 @@ dependencies = [
     "aiosqlite>=0.21.0",
     "django>=4.2.25",
     "elevenlabs>=2.16.0",
+    "google-genai>=1.45.0",
     "openai>=2.0.1",
     "python-dotenv>=1.1.1",
     "python-telegram-bot>=22.5",

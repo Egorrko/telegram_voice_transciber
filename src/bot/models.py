@@ -17,6 +17,9 @@ class User(TimestampModel):
     last_free_reset_at = models.DateTimeField(default=timezone.now)
     warned_at = models.DateTimeField(null=True, blank=True)
 
+    def __str__(self):
+        return f"Пользователь {self.hashed_user_id[:8]}..."
+
 
 class Transcription(TimestampModel):
     user = models.ForeignKey(
@@ -25,8 +28,14 @@ class Transcription(TimestampModel):
     audio_duration = models.IntegerField()
     transcription_time = models.FloatField()
 
+    def __str__(self):
+        return f"Транскрипция #{self.id} от {self.user}"
+
 
 class Payment(TimestampModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="payments")
     payment_id = models.CharField(max_length=255)
     total_amount = models.IntegerField()
+
+    def __str__(self):
+        return f"Платеж {self.payment_id} на сумму {self.total_amount} от {self.user}"
