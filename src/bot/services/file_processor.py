@@ -1,5 +1,8 @@
+import tempfile
 import sentry_sdk
 import os
+import subprocess
+import io
 
 from aiogram.utils.formatting import BlockQuote, Pre
 from bot.bot_init import bot
@@ -10,7 +13,26 @@ from bot.services import db
 import time
 
 
-async def handle_audio_file(message, hashed_user_id, file_duration, file_id, mime_type):
+async def convert_video_to_audio(file):
+    with tempfile.NamedTemporaryFile() as temp_file:
+        temp_file.write(file.read())
+        file_path = temp_file.name
+
+        command = ["ffmpeg", "-i", file_path, '-vn', "-c:a", "copy", "-f", "adts", "-"]
+        process = subprocess.Popen(
+            command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        audio_bytes, stderr_bytes = process.communicate()
+
+        if process.returncode != 0:
+            raise Exception(f"{stderr_bytes.decode()}")
+
+        return io.BytesIO(audio_bytes), "audio/aac"
+
+
+async def handle_file(
+    message, hashed_user_id, file_type, file_duration, file_id, mime_type
+):
     file_info = None
     try:
         user, check_result = await db.prepare_user_for_transcription(
@@ -36,21 +58,38 @@ async def handle_audio_file(message, hashed_user_id, file_duration, file_id, mim
         file_info = await bot.get_file(file_id)
         file = await bot.download_file(file_info.file_path)
 
+        if file_type == "video_note":
+            audio_bytes, mime_type = await convert_video_to_audio(file)
+        else:
+            audio_bytes = file
+
         start_time = time.time()
-        transcript = await transcription_client.transcribe(file, mime_type)
+        transcript = await transcription_client.transcribe(audio_bytes, mime_type)
         transcription_time = time.time() - start_time
 
         if len(transcript) > settings.MAX_MESSAGE_LENGTH:
-            await msg.edit_text(**BlockQuote(transcript[:settings.MAX_MESSAGE_LENGTH]).as_kwargs())
-            for i in range(settings.MAX_MESSAGE_LENGTH, len(transcript), settings.MAX_MESSAGE_LENGTH):
-                await message.reply(**BlockQuote(transcript[i : i + settings.MAX_MESSAGE_LENGTH]).as_kwargs())
+            await msg.edit_text(
+                **BlockQuote(transcript[: settings.MAX_MESSAGE_LENGTH]).as_kwargs()
+            )
+            for i in range(
+                settings.MAX_MESSAGE_LENGTH,
+                len(transcript),
+                settings.MAX_MESSAGE_LENGTH,
+            ):
+                await message.reply(
+                    **BlockQuote(
+                        transcript[i : i + settings.MAX_MESSAGE_LENGTH]
+                    ).as_kwargs()
+                )
         else:
             await msg.edit_text(**BlockQuote(transcript).as_kwargs())
 
         await db.process_user_transcription(user, file_duration, transcription_time)
         await db.insert_transcription_log(user, file_duration, transcription_time)
     except Exception as e:
-        await msg.edit_text(**Pre(f"Ошибочка: {e[:settings.MAX_MESSAGE_LENGTH]}").as_kwargs())
+        await msg.edit_text(
+            **Pre(f"Ошибочка: {str(e)}"[: settings.MAX_MESSAGE_LENGTH]).as_kwargs()
+        )
         sentry_sdk.capture_exception(e)
         user, _ = await db.get_or_create_user(hashed_user_id)
         await db.insert_transcription_log(user, file_duration, -1)

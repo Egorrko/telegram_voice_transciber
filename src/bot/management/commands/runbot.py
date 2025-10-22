@@ -5,6 +5,7 @@ from bot.bot_init import run_bot
 from config import settings
 import sentry_sdk
 
+
 class Command(BaseCommand):
     help = "Run the bot"
 
