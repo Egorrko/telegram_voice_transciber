@@ -400,3 +400,4 @@ pyrightconfig.json
 .DS_Store
 transcriptions.db
 .env
+warp-data/

@@ -10,6 +10,7 @@ dependencies = [
     "django>=4.2.25",
     "elevenlabs>=2.16.0",
     "google-genai>=1.45.0",
+    "httpx[socks]>=0.28.1",
     "openai>=2.0.1",
     "python-dotenv>=1.1.1",
     "python-telegram-bot>=22.5",
