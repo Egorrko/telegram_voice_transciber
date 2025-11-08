@@ -79,6 +79,8 @@ class Gemini25FlashTranscribeTS(TranscriptionService):
         response = await self.client.aio.models.generate_content(
             model="gemini-2.5-flash", contents=[prompt, file]
         )
+        if not response.text:
+            raise Exception(response)
         return response.text
 
 
