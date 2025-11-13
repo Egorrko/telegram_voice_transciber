@@ -1,3 +1,4 @@
+import asyncio
 import tempfile
 import sentry_sdk
 import os
@@ -63,9 +64,18 @@ async def handle_file(
         else:
             audio_bytes = file
 
+        retries = 0
         start_time = time.time()
-        transcript = await transcription_client.transcribe(audio_bytes, mime_type)
-        transcription_time = time.time() - start_time
+        while retries < settings.MAX_RETRIES:
+            try:
+                transcript = await transcription_client.transcribe(audio_bytes, mime_type)
+                transcription_time = time.time() - start_time
+            except Exception as e:
+                retries += 1
+                await msg.edit_text(**BlockQuote(f"Попытка {retries}/{settings.MAX_RETRIES}...").as_kwargs())
+                await asyncio.sleep(settings.RETRY_DELAY)
+                if retries == settings.MAX_RETRIES:
+                    raise e
 
         if len(transcript) > settings.MAX_MESSAGE_LENGTH:
             await msg.edit_text(

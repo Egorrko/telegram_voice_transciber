@@ -162,3 +162,6 @@ ALLOWED_CHAT_IDS = list(
         os.environ.get("ALLOWED_CHAT_IDS").split(","),
     )
 )
+
+MAX_RETRIES = int(os.environ.get("MAX_RETRIES", 3))
+RETRY_DELAY = int(os.environ.get("RETRY_DELAY", 1))
