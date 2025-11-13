@@ -72,8 +72,8 @@ async def handle_file(
                 transcription_time = time.time() - start_time
             except Exception as e:
                 retries += 1
-                await msg.edit_text(**BlockQuote(f"Попытка {retries}/{settings.MAX_RETRIES}...").as_kwargs())
-                await asyncio.sleep(settings.RETRY_DELAY)
+                await msg.edit_text(**BlockQuote(f"Попытка {retries}/{settings.MAX_RETRIES}...\nЖдите {(settings.RETRY_DELAY*retries)**2} секунд...").as_kwargs())
+                await asyncio.sleep((settings.RETRY_DELAY*retries)**2)
                 if retries == settings.MAX_RETRIES:
                     raise e
 
