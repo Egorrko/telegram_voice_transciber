@@ -70,6 +70,7 @@ async def handle_file(
             try:
                 transcript = await transcription_client.transcribe(audio_bytes, mime_type)
                 transcription_time = time.time() - start_time
+                break
             except Exception as e:
                 retries += 1
                 await msg.edit_text(**BlockQuote(f"Попытка {retries}/{settings.MAX_RETRIES}...\nЖдите {(settings.RETRY_DELAY*retries)**2} секунд...").as_kwargs())
