@@ -4,28 +4,57 @@ services:
       context: telegram-bot-api
       args:
         - BUILD_CPU_COUNT=${BUILD_CPU_COUNT}
+    env_file: 
+      - .env
     environment:
-      - TELEGRAM_API_ID=${TELEGRAM_API_ID}
-      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH}
       - TELEGRAM_LOCAL=true
+    restart: always
     volumes:
       - telegram-bot-api-data:/var/lib/telegram-bot-api
-    restart: always
+
   goodsecretarybot:
-    build:
-      context: .
+    build: .
+    entrypoint: ./entrypoint.sh
     environment:
-      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - SENTRY_DSN=${SENTRY_DSN}
-      - BOT_NAME=${BOT_NAME}
-      - TELEGRAM_BOT_API_URL=${TELEGRAM_BOT_API_URL}
+      ALL_PROXY: "socks5h://warp:1080"
+      HTTPS_PROXY: "socks5h://warp:1080"
+      HTTP_PROXY: "socks5h://warp:1080"
+    command: uv run src/manage.py runbot
+    env_file: 
+      - .env
     restart: always
     volumes:
       - telegram-bot-api-data:/var/lib/telegram-bot-api
-      - ./transcriptions.db:/app/transcriptions.db
+      - ./data:/app/data
     depends_on:
       - telegram-bot-api
+
+  warp:
+    image: caomingjun/warp
+    container_name: warp
+    restart: always
+    # add removed rule back (https://github.com/opencontainers/runc/pull/3468)
+    device_cgroup_rules:
+      - 'c 10:200 rwm'
+    environment:
+      - WARP_SLEEP=2
+      # - WARP_LICENSE_KEY= # optional
+      # - WARP_ENABLE_NAT=1 # enable nat
+    cap_add:
+      # Docker already have them, these are for podman users
+      - MKNOD
+      - AUDIT_WRITE
+      # additional required cap for warp, both for podman and docker
+      - NET_ADMIN
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv4.conf.all.src_valid_mark=1
+      # uncomment for nat
+      # - net.ipv4.ip_forward=1
+      # - net.ipv6.conf.all.forwarding=1
+      # - net.ipv6.conf.all.accept_ra=2
+    volumes:
+      - ./warp-data:/var/lib/cloudflare-warp
 
 volumes:
   telegram-bot-api-data:
