@@ -9,7 +9,7 @@ from aiogram.utils.formatting import BlockQuote, Pre
 from bot.bot_init import bot
 from config import settings
 import bot.messages as messages
-from bot.services.transcribe import transcription_client
+from bot.services.transcribe import transcription_client, fallback_transcription_client
 from bot.services import db
 import time
 
@@ -74,10 +74,19 @@ async def handle_file(
             except Exception as e:
                 audio_bytes.seek(0)
                 retries += 1
-                await msg.edit_text(**BlockQuote(f"Попытка {retries}/{settings.MAX_RETRIES}...\nЖдите {(settings.RETRY_DELAY*retries)**2} секунд...").as_kwargs())
-                await asyncio.sleep((settings.RETRY_DELAY*retries)**2)
+                await msg.edit_text(**BlockQuote(f"Попытка {retries}/{settings.MAX_RETRIES}...\nЖдите {(settings.RETRY_DELAY*retries)} секунд...").as_kwargs())
+                await asyncio.sleep((settings.RETRY_DELAY*retries))
                 if retries == settings.MAX_RETRIES:
                     raise e
+
+        if not transcript and fallback_transcription_client:
+            try:
+                await msg.edit_text(**BlockQuote("Последняя попытка...").as_kwargs())
+                audio_bytes.seek(0)
+                transcript = await fallback_transcription_client.transcribe(audio_bytes, mime_type)
+                transcription_time = time.time() - start_time
+            except Exception as e:
+                raise e
 
         if len(transcript) > settings.MAX_MESSAGE_LENGTH:
             await msg.edit_text(
