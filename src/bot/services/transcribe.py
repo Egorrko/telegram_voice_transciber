@@ -75,7 +75,7 @@ class Gemini25FlashTranscribeTS(TranscriptionService):
         file = await self.client.aio.files.upload(
             file=file_data, config=UploadFileConfig(mime_type=mime_type)
         )
-        prompt = "Generate a transcript of this audio file."
+        prompt = settings.GEMINI_PROMPT
         response = await self.client.aio.models.generate_content(
             model="gemini-2.5-flash", contents=[prompt, file]
         )
@@ -100,7 +100,7 @@ class Gemini3FlashTranscribeTS(TranscriptionService):
         file = await self.client.aio.files.upload(
             file=file_data, config=UploadFileConfig(mime_type=mime_type)
         )
-        prompt = "Generate a transcript of this audio file."
+        prompt = settings.GEMINI_PROMPT
         response = await self.client.aio.models.generate_content(
             model="gemini-3-flash-preview", contents=[prompt, file]
         )
