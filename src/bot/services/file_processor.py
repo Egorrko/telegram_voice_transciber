@@ -66,6 +66,9 @@ async def handle_file(
 
         retries = 0
         start_time = time.time()
+        transcript = None
+        errors = []
+        
         while retries < settings.MAX_RETRIES:
             try:
                 transcript = await transcription_client.transcribe(audio_bytes, mime_type)
@@ -77,16 +80,19 @@ async def handle_file(
                 await msg.edit_text(**BlockQuote(f"Попытка {retries}/{settings.MAX_RETRIES}...\nЖдите {(settings.RETRY_DELAY*retries)} секунд...").as_kwargs())
                 await asyncio.sleep((settings.RETRY_DELAY*retries))
                 if retries == settings.MAX_RETRIES:
-                    raise e
+                    errors.append(e)
 
-        if not transcript and fallback_transcription_client:
+        if transcript is None and fallback_transcription_client:
             try:
                 await msg.edit_text(**BlockQuote("Последняя попытка...").as_kwargs())
                 audio_bytes.seek(0)
                 transcript = await fallback_transcription_client.transcribe(audio_bytes, mime_type)
                 transcription_time = time.time() - start_time
             except Exception as e:
-                raise e
+                errors.append(e)
+        
+        if transcript is None:
+            raise Exception(errors)
 
         if len(transcript) > settings.MAX_MESSAGE_LENGTH:
             await msg.edit_text(
