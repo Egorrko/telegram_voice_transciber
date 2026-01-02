@@ -5,6 +5,7 @@ import os
 import subprocess
 import io
 
+from enum import StrEnum
 from aiogram.utils.formatting import BlockQuote, Pre
 from bot.bot_init import bot
 from config import settings
@@ -14,16 +15,27 @@ from bot.services import db
 import time
 
 
+class ProcessStatus(StrEnum):
+    INIT = "Инициализация"
+    DOWNLOAD = "Скачиваю файл..."
+    CONVERT = "Достаю звук из видео..."
+    TRANSCRIBE = "Распознаю..."
+    SENDING = "Отправляю результат..."
+
+
 async def convert_video_to_audio(file):
     with tempfile.NamedTemporaryFile() as temp_file:
         temp_file.write(file.read())
         file_path = temp_file.name
 
-        command = ["ffmpeg", "-i", file_path, '-vn', "-c:a", "copy", "-f", "adts", "-"]
-        process = subprocess.Popen(
-            command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        command = ["ffmpeg", "-i", file_path, "-vn", "-c:a", "copy", "-f", "adts", "-"]
+        process = await asyncio.create_subprocess_exec(
+            *command,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
-        audio_bytes, stderr_bytes = process.communicate()
+        audio_bytes, stderr_bytes = await process.communicate()
 
         if process.returncode != 0:
             raise Exception(f"{stderr_bytes.decode()}")
@@ -35,6 +47,17 @@ async def handle_file(
     message, hashed_user_id, file_type, file_duration, file_id, mime_type
 ):
     file_info = None
+    current_step = ProcessStatus.INIT.name
+
+    async def set_step(msg, step: ProcessStatus, notify_user=True):
+        nonlocal current_step
+        current_step = step.name
+        try:
+            if msg.text != step.value and notify_user:
+                await msg.edit_text(step.value)
+        except Exception:
+            pass
+
     try:
         user, check_result = await db.prepare_user_for_transcription(
             hashed_user_id, file_duration
@@ -56,10 +79,12 @@ async def handle_file(
             )
         msg = await message.reply("Распознаю...")
 
+        await set_step(msg, ProcessStatus.DOWNLOAD)
         file_info = await bot.get_file(file_id)
-        file = await bot.download_file(file_info.file_path)
+        file = await bot.download_file(file_info.file_path, timeout=60)
 
         if file_type == "video_note":
+            await set_step(msg, ProcessStatus.CONVERT)
             audio_bytes, mime_type = await convert_video_to_audio(file)
         else:
             audio_bytes = file
@@ -68,17 +93,24 @@ async def handle_file(
         start_time = time.time()
         transcript = None
         errors = []
-        
+
+        await set_step(msg, ProcessStatus.TRANSCRIBE)
         while retries < settings.MAX_RETRIES:
             try:
-                transcript = await transcription_client.transcribe(audio_bytes, mime_type)
+                transcript = await transcription_client.transcribe(
+                    audio_bytes, mime_type
+                )
                 transcription_time = time.time() - start_time
                 break
             except Exception as e:
                 audio_bytes.seek(0)
                 retries += 1
-                await msg.edit_text(**BlockQuote(f"Попытка {retries}/{settings.MAX_RETRIES}...\nЖдите {(settings.RETRY_DELAY*retries)} секунд...").as_kwargs())
-                await asyncio.sleep((settings.RETRY_DELAY*retries))
+                await msg.edit_text(
+                    **BlockQuote(
+                        f"Попытка {retries}/{settings.MAX_RETRIES}...\nЖдите {(settings.RETRY_DELAY * retries)} секунд..."
+                    ).as_kwargs()
+                )
+                await asyncio.sleep((settings.RETRY_DELAY * retries))
                 if retries == settings.MAX_RETRIES:
                     errors.append(e)
 
@@ -86,14 +118,17 @@ async def handle_file(
             try:
                 await msg.edit_text(**BlockQuote("Последняя попытка...").as_kwargs())
                 audio_bytes.seek(0)
-                transcript = await fallback_transcription_client.transcribe(audio_bytes, mime_type)
+                transcript = await fallback_transcription_client.transcribe(
+                    audio_bytes, mime_type
+                )
                 transcription_time = time.time() - start_time
             except Exception as e:
                 errors.append(e)
-        
+
         if transcript is None:
             raise Exception(errors)
 
+        await set_step(msg, ProcessStatus.SENDING, notify_user=False)
         if len(transcript) > settings.MAX_MESSAGE_LENGTH:
             await msg.edit_text(
                 **BlockQuote(transcript[: settings.MAX_MESSAGE_LENGTH]).as_kwargs()
@@ -114,9 +149,16 @@ async def handle_file(
         await db.process_user_transcription(user, file_duration, transcription_time)
         await db.insert_transcription_log(user, file_duration, transcription_time)
     except Exception as e:
+        error_text = str(e) if str(e) else f"{type(e).__name__}"
         await msg.edit_text(
-            **Pre(f"Ошибочка: {str(e)}"[: settings.MAX_MESSAGE_LENGTH]).as_kwargs()
+            **Pre(
+                f"Ошибочка ({current_step}):\n{error_text}"[
+                    : settings.MAX_MESSAGE_LENGTH
+                ]
+            ).as_kwargs()
         )
+
+        sentry_sdk.set_context("pipeline", {"step": current_step})
         sentry_sdk.capture_exception(e)
         user, _ = await db.get_or_create_user(hashed_user_id)
         await db.insert_transcription_log(user, file_duration, -1)
