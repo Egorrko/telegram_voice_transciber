@@ -144,12 +144,16 @@ def get_transcription_client(engine_name: str) -> TranscriptionService:
         "gemini-2.5-flash-lite": Gemini25FlashLiteTranscribeTS(),
     }
     if engine_name not in engines:
-        raise ValueError(f"Invalid engine name: {engine_name}. Available engines: {engines.keys()}")
+        raise ValueError(
+            f"Invalid engine name: {engine_name}. Available engines: {engines.keys()}"
+        )
     return engines[engine_name]
 
 
 transcription_client = get_transcription_client(settings.TRANSCRIPTION_ENGINE)
 if settings.FALLBACK_TRANSCRIPTION_ENGINE:
-    fallback_transcription_client = get_transcription_client(settings.FALLBACK_TRANSCRIPTION_ENGINE)
+    fallback_transcription_client = get_transcription_client(
+        settings.FALLBACK_TRANSCRIPTION_ENGINE
+    )
 else:
     fallback_transcription_client = None
