@@ -109,6 +109,31 @@ class Gemini3FlashTranscribeTS(TranscriptionService):
         return response.text
 
 
+class Gemini25FlashLiteTranscribeTS(TranscriptionService):
+    def __init__(self):
+        from google import genai
+
+        api_key = settings.GEMINI_API_KEY
+        if api_key is None:
+            raise ValueError("Для Gemini необходимо установить GEMINI_API_KEY")
+
+        self.client = genai.Client()
+
+    async def transcribe(self, file_data: io.BytesIO, mime_type: str) -> str:
+        from google.genai.types import UploadFileConfig
+
+        file = await self.client.aio.files.upload(
+            file=file_data, config=UploadFileConfig(mime_type=mime_type)
+        )
+        prompt = settings.GEMINI_PROMPT
+        response = await self.client.aio.models.generate_content(
+            model="gemini-2.5-flash-lite", contents=[prompt, file]
+        )
+        if not response.text:
+            raise Exception(response)
+        return response.text
+
+
 def get_transcription_client(engine_name: str) -> TranscriptionService:
     engines = {
         "openai-whisper": OpenAIWhisperTS(),
@@ -116,6 +141,7 @@ def get_transcription_client(engine_name: str) -> TranscriptionService:
         "elevenlabs-scribe_v1": ElevenLabsScribeV1TS(),
         "gemini-2.5-flash": Gemini25FlashTranscribeTS(),
         "gemini-3-flash-preview": Gemini3FlashTranscribeTS(),
+        "gemini-2.5-flash-lite": Gemini25FlashLiteTranscribeTS(),
     }
     if engine_name not in engines:
         raise ValueError(f"Invalid engine name: {engine_name}. Available engines: {engines.keys()}")

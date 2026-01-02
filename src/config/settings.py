@@ -184,9 +184,15 @@ STRICT GUIDELINES:
    - If there is NO speech, describe the sound in Russian inside square brackets.
    - Example: [Играет музыка], [Шум ветра], [Смех], [Вздох].
    - Do NOT use English descriptions like "Ambient noise".
+6. **FORMATTING & PARAGRAPHS**:
+   - **Important**: Break long transcriptions into logical paragraphs.
+   - Do not output a single "wall of text".
+   - Start a new paragraph when the speaker changes the topic, after a long pause, or to improve readability.
 
 Example Output:
-[Звук улицы] Привет! 😃 Слушай, я тут такую кофейню нашел, просто вау! ☕️ Обязательно сходим. [Смех] Ты не поверишь, кого я там встретил... 😱
+[Звук улицы] Привет! Слушай, я тут такую кофейню нашел, просто вау! Обязательно сходим. [Смех] Ты не поверишь, кого я там встретил...
+
+Кстати, по поводу завтрашней встречи. Я думаю, нам стоит перенести время, потому что я не успеваю.
 
 Input Audio:
 [Audio File]
