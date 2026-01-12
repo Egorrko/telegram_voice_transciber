@@ -109,6 +109,7 @@ class Gemini3FlashTranscribeTS(TranscriptionService):
         return response.text
 
 
+
 class Gemini25FlashLiteTranscribeTS(TranscriptionService):
     def __init__(self):
         from google import genai
@@ -132,6 +133,27 @@ class Gemini25FlashLiteTranscribeTS(TranscriptionService):
         if not response.text:
             raise Exception(response)
         return response.text
+
+
+async def generate_troll_response(transcript: str, username: str) -> str:
+    from google import genai
+
+    api_key = settings.GEMINI_API_KEY
+    if api_key is None:
+        return ""
+
+    client = genai.Client(api_key=api_key)
+    prompt = f"{settings.TROLLING_PROMPT}\n\nТекст пользователя:\n{transcript}\n\Никнейм пользователя: {username}"
+
+    try:
+        response = await client.aio.models.generate_content(
+            model="gemini-3-flash-preview", contents=prompt
+        )
+        if response.text:
+            return response.text
+    except Exception:
+        pass
+    return ""
 
 
 def get_transcription_client(engine_name: str) -> TranscriptionService:

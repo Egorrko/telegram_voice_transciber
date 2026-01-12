@@ -10,7 +10,11 @@ from aiogram.utils.formatting import BlockQuote, Pre
 from bot.bot_init import bot
 from config import settings
 import bot.messages as messages
-from bot.services.transcribe import transcription_client, fallback_transcription_client
+from bot.services.transcribe import (
+    transcription_client,
+    fallback_transcription_client,
+    generate_troll_response,
+)
 from bot.services import db
 import time
 
@@ -127,6 +131,14 @@ async def handle_file(
 
         if transcript is None:
             raise Exception(errors)
+
+        if message.from_user and message.from_user.id in settings.TROLLING_USERS:
+            try:
+                troll_resp = await generate_troll_response(transcript, message.from_user.username)
+                if troll_resp:
+                    await message.reply(troll_resp)
+            except Exception:
+                pass
 
         await set_step(msg, ProcessStatus.SENDING, notify_user=False)
         if len(transcript) > settings.MAX_MESSAGE_LENGTH:
