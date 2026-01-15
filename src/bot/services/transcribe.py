@@ -147,7 +147,7 @@ async def generate_troll_response(transcript: str, username: str) -> str:
 
     try:
         response = await client.aio.models.generate_content(
-            model="gemini-3-flash-preview", contents=prompt
+            model=settings.TRANSCRIPTION_ENGINE, contents=prompt
         )
         if response.text:
             return response.text
