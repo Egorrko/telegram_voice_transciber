@@ -1,5 +1,6 @@
 import asyncio
 import tempfile
+import logging
 import sentry_sdk
 import os
 import subprocess
@@ -107,6 +108,7 @@ async def handle_file(
                 transcription_time = time.time() - start_time
                 break
             except Exception as e:
+                logging.error(f"Error during transcription attempt {retries}: {e}")
                 audio_bytes.seek(0)
                 retries += 1
                 await msg.edit_text(
@@ -127,6 +129,7 @@ async def handle_file(
                 )
                 transcription_time = time.time() - start_time
             except Exception as e:
+                logging.error(f"Error during fallback transcription: {e}")
                 errors.append(e)
 
         if transcript is None:
@@ -161,6 +164,7 @@ async def handle_file(
         await db.process_user_transcription(user, file_duration, transcription_time)
         await db.insert_transcription_log(user, file_duration, transcription_time)
     except Exception as e:
+        logging.error(f"Error processing file: {e}")
         error_text = str(e) if str(e) else f"{type(e).__name__}"
         await msg.edit_text(
             **Pre(
