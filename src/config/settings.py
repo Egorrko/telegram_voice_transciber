@@ -204,6 +204,7 @@ TROLLING_USERS = list(
         filter(None, os.environ.get("TROLLING_USERS", "").split(",")),
     )
 )
+print(TROLLING_USERS)
 
 TROLLING_PROMPT = os.environ.get(
     "TROLLING_PROMPT",
