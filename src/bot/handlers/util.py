@@ -1,8 +1,9 @@
 import hashlib
 
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import Message
+
 
 from config import settings
 from bot import messages
@@ -29,6 +30,6 @@ async def stats(message: Message):
         )
     )
 
-@router.message()
+@router.message(F.text, F.chat.type == "private")
 async def unknown_command(message: Message):
     await message.reply(messages.UNKNOWN_COMMAND_MESSAGE)
