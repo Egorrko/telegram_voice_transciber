@@ -20,9 +20,9 @@ def setup_handlers(dp: Dispatcher) -> None:
     from bot import handlers
 
     dp.include_routers(
-        handlers.util.router,
         handlers.voice.router,
         handlers.payment.router,
+        handlers.util.router,
     )
 
 

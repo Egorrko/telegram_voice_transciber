@@ -28,3 +28,7 @@ async def stats(message: Message):
             user.last_free_reset_at,
         )
     )
+
+@router.message()
+async def unknown_command(message: Message):
+    await message.reply(messages.UNKNOWN_COMMAND_MESSAGE)
