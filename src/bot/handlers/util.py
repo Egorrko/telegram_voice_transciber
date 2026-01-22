@@ -30,6 +30,10 @@ async def stats(message: Message):
         )
     )
 
+@router.message(Command("model"))
+async def model(message: Message):
+    await message.reply(f"{settings.TRANSCRIPTION_ENGINE=} {settings.FALLBACK_TRANSCRIPTION_ENGINE=}")
+
 @router.message(F.text, F.chat.type == "private")
 async def unknown_command(message: Message):
     await message.reply(messages.UNKNOWN_COMMAND_MESSAGE)
