@@ -143,7 +143,11 @@ async def handle_file(
 ):
     file_info = None
 
+    current_step = ProcessStatus.INIT.name
+
     async def set_step(msg, step: ProcessStatus, notify_user=True):
+        nonlocal current_step
+        current_step = step.name
         if notify_user:
             try:
                 await msg.edit_text(step.value)
