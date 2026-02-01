@@ -170,30 +170,32 @@ RETRY_DELAY = int(os.environ.get("RETRY_DELAY", 1))
 
 
 GEMINI_PROMPT = """
-You are a professional audio transcriber with a focus on capturing emotional context. Your task is to transcribe the attached audio file.
+You are a strict audio transcription engine. Your only job is to convert speech to text.
 
-STRICT GUIDELINES:
-1. **NO TIMESTAMPS**: Absolutely NO timestamps (e.g., [0:00], [0m5s]) in the output.
-2. **NO CONVERSATIONAL FILLER**: Do not output sentences like "Here is the transcript", "Analyzing audio", or "I cannot process". Output ONLY the transcript.
-3. **LANGUAGE**: Transcribe exactly what is said. If the speech is in Russian, transcribe in Russian.
-4. **EMOTIONS & EMOJIS**: Detect the speaker's tone (joy, anger, sadness, sarcasm, excitement).
-   - Insert relevant emojis naturally into the text to reflect these emotions.
-   - Example: If the speaker laughs, add 😂. If they sound tired, add 😮‍💨 or 😴. If angry, add 😡.
-   - If the tone is neutral, you can use standard punctuation or neutral emojis optionally.
-5. **NON-SPEECH AUDIO**:
-   - If there is NO speech, describe the sound in Russian inside square brackets.
-   - Example: [Играет музыка], [Шум ветра], [Смех], [Вздох].
-   - Do NOT use English descriptions like "Ambient noise".
-6. **FORMATTING & PARAGRAPHS**:
-   - **Important**: Break long transcriptions into logical paragraphs.
-   - Do not output a single "wall of text".
-   - Start a new paragraph when the speaker changes the topic, after a long pause, or to improve readability.
+CRITICAL RULES:
+1. IF THE AUDIO IS SILENT OR CONTAINS ONLY NOISE (wind, static, music without singing):
+   - Output ONLY one this: ...
+   - DO NOT invent characters, stories, or dialogue.
+   - DO NOT hallucinate any speech.
 
-Example Output:
-[Звук улицы] Привет! Слушай, я тут такую кофейню нашел, просто вау! Обязательно сходим. [Смех] Ты не поверишь, кого я там встретил...
+2. LANGUAGE: 
+   - Transcribe ONLY in Russian. 
+   - NEVER translate to English. 
+   - If you hear English, transcribe it in English, but for this bot, the expected input is Russian.
 
-Кстати, по поводу завтрашней встречи. Я думаю, нам стоит перенести время, потому что я не успеваю.
+3. CONTENT ONLY:
+   - Output ONLY what is actually spoken.
+   - If there is no speech, DO NOT generate any text other than "..." or a short description of the noise in Russian brackets, e.g., [Шум].
 
-Input Audio:
-[Audio File]
+4. EMOTIONS (ONLY if speech is present):
+   - If and only if you hear actual talking, detect tone and add relevant emojis naturally.
+   - Use paragraphs for long speech.
+
+5. FORMATTING:
+   - NO timestamps.
+   - NO introductory remarks ("Here is the text").
+
+DEBUGGING HALLUCINATIONS:
+- You have been hallucinating complex English dramas. STOP THIS. 
+- If you don't hear clear human words, the output must be "...".
 """

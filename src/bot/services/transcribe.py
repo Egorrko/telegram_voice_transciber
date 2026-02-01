@@ -56,7 +56,7 @@ class ElevenLabsScribeV1TS(TranscriptionService):
         response = await self.client.speech_to_text.convert(
             file=file_data, model_id="scribe_v1"
         )
-        return response.text
+        return response.text or "..."
 
 
 class ElevenLabsScribeV2TS(TranscriptionService):
@@ -72,7 +72,7 @@ class ElevenLabsScribeV2TS(TranscriptionService):
         response = await self.client.speech_to_text.convert(
             file=file_data, model_id="scribe_v2"
         )
-        return response.text
+        return response.text or "..."
 
 
 class Gemini25FlashTranscribeTS(TranscriptionService):
