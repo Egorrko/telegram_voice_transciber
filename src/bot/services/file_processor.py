@@ -115,7 +115,8 @@ async def run_transcription(msg, audio_bytes, mime_type, set_step):
             errors.append(e)
 
     if transcript is None:
-        raise Exception(errors)
+        error_text = "\n\n".join([f"{type(e).__name__}: {str(e)}" for e in errors])
+        raise Exception(error_text)
 
 
 async def send_results(message, msg, transcript, set_step):
