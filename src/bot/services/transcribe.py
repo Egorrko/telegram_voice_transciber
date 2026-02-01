@@ -59,6 +59,22 @@ class ElevenLabsScribeV1TS(TranscriptionService):
         return response.text
 
 
+class ElevenLabsScribeV2TS(TranscriptionService):
+    def __init__(self):
+        from elevenlabs.client import AsyncElevenLabs
+
+        api_key = settings.ELEVENLABS_API_KEY
+        if api_key is None:
+            raise ValueError("Для ElevenLabs необходимо установить ELEVENLABS_API_KEY")
+        self.client = AsyncElevenLabs(api_key=api_key)
+
+    async def transcribe(self, file_data: io.BytesIO, mime_type: str) -> str:
+        response = await self.client.speech_to_text.convert(
+            file=file_data, model_id="scribe_v2"
+        )
+        return response.text
+
+
 class Gemini25FlashTranscribeTS(TranscriptionService):
     def __init__(self):
         from google import genai
@@ -139,6 +155,7 @@ def get_transcription_client(engine_name: str) -> TranscriptionService:
         "openai-whisper": OpenAIWhisperTS(),
         "openai-gpt-4o-mini-transcribe": OpenAIGPT4oMiniTranscribeTS(),
         "elevenlabs-scribe_v1": ElevenLabsScribeV1TS(),
+        "elevenlabs-scribe_v2": ElevenLabsScribeV2TS(),
         "gemini-2.5-flash": Gemini25FlashTranscribeTS(),
         "gemini-3-flash-preview": Gemini3FlashTranscribeTS(),
         "gemini-2.5-flash-lite": Gemini25FlashLiteTranscribeTS(),
