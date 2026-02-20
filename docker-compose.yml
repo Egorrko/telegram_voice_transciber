@@ -38,6 +38,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    ports:
+      - 127.0.0.1:1080:1080
     # add removed rule back (https://github.com/opencontainers/runc/pull/3468)
     device_cgroup_rules:
       - 'c 10:200 rwm'
