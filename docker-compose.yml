@@ -16,9 +16,9 @@ services:
     build: .
     entrypoint: ./entrypoint.sh
     environment:
-      ALL_PROXY: "socks5h://warp:1080"
-      HTTPS_PROXY: "socks5h://warp:1080"
-      HTTP_PROXY: "socks5h://warp:1080"
+      ALL_PROXY: "http://${PROXY_USERNAME}:${PROXY_PASSWORD}@127.0.0.1:1080"
+      HTTPS_PROXY: "http://${PROXY_USERNAME}:${PROXY_PASSWORD}@127.0.0.1:1080"
+      HTTP_PROXY: "http://${PROXY_USERNAME}:${PROXY_PASSWORD}@127.0.0.1:1080"
     command: uv run src/manage.py runbot
     env_file: 
       - .env
@@ -28,40 +28,6 @@ services:
       - ./data:/app/data
     depends_on:
       - telegram-bot-api
-
-  warp:
-    image: caomingjun/warp
-    container_name: warp
-    restart: always
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    ports:
-      - 127.0.0.1:1080:1080
-    # add removed rule back (https://github.com/opencontainers/runc/pull/3468)
-    device_cgroup_rules:
-      - 'c 10:200 rwm'
-    environment:
-      - WARP_SLEEP=2
-      # - WARP_LICENSE_KEY= # optional
-      # - WARP_ENABLE_NAT=1 # enable nat
-    cap_add:
-      # Docker already have them, these are for podman users
-      - MKNOD
-      - AUDIT_WRITE
-      # additional required cap for warp, both for podman and docker
-      - NET_ADMIN
-    sysctls:
-      - net.ipv6.conf.all.disable_ipv6=0
-      - net.ipv4.conf.all.src_valid_mark=1
-      # uncomment for nat
-      # - net.ipv4.ip_forward=1
-      # - net.ipv6.conf.all.forwarding=1
-      # - net.ipv6.conf.all.accept_ra=2
-    volumes:
-      - ./warp-data:/var/lib/cloudflare-warp
 
 volumes:
   telegram-bot-api-data:
