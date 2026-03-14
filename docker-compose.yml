@@ -16,9 +16,9 @@ services:
     build: .
     entrypoint: ./entrypoint.sh
     environment:
-      ALL_PROXY: "http://${PROXY_USERNAME}:${PROXY_PASSWORD}@127.0.0.1:1080"
-      HTTPS_PROXY: "http://${PROXY_USERNAME}:${PROXY_PASSWORD}@127.0.0.1:1080"
-      HTTP_PROXY: "http://${PROXY_USERNAME}:${PROXY_PASSWORD}@127.0.0.1:1080"
+      ALL_PROXY: "http://${PROXY_USERNAME}:${PROXY_PASSWORD}@${PROXY_HOST}:${PROXY_PORT}"
+      HTTPS_PROXY: "http://${PROXY_USERNAME}:${PROXY_PASSWORD}@${PROXY_HOST}:${PROXY_PORT}"
+      HTTP_PROXY: "http://${PROXY_USERNAME}:${PROXY_PASSWORD}@${PROXY_HOST}:${PROXY_PORT}"
     command: uv run src/manage.py runbot
     env_file: 
       - .env
