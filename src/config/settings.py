@@ -165,6 +165,15 @@ ALLOWED_CHAT_IDS = list(
     )
 )
 
+FORWARD_CHAT_IDS = list(
+    map(
+        lambda x: -(1000000000000 + int(x)),
+        os.environ.get("FORWARD_CHAT_IDS", "").split(","),
+    )
+)
+
+ADMIN_ID = int(os.environ.get("ADMIN_ID", 0))
+
 MAX_RETRIES = int(os.environ.get("MAX_RETRIES", 3))
 RETRY_DELAY = int(os.environ.get("RETRY_DELAY", 1))
 

@@ -21,6 +21,7 @@ def setup_handlers(dp: Dispatcher) -> None:
 
     dp.include_routers(
         handlers.voice.router,
+        handlers.forward.router,
         handlers.payment.router,
         handlers.util.router,
     )
