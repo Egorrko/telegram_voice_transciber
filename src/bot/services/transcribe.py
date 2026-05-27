@@ -150,7 +150,7 @@ class Gemini25FlashLiteTranscribeTS(TranscriptionService):
         return response.text
 
 
-class Gemini31FlashLitePreviewTranscribeTS(TranscriptionService):
+class Gemini31FlashLiteTranscribeTS(TranscriptionService):
     def __init__(self):
         from google import genai
 
@@ -168,7 +168,7 @@ class Gemini31FlashLitePreviewTranscribeTS(TranscriptionService):
         )
         prompt = settings.GEMINI_PROMPT
         response = await self.client.aio.models.generate_content(
-            model="gemini-3.1-flash-lite-preview", contents=[prompt, file]
+            model="gemini-3.1-flash-lite", contents=[prompt, file]
         )
         if not response.text:
             raise Exception(response)
@@ -184,7 +184,7 @@ def get_transcription_client(engine_name: str) -> TranscriptionService:
         "gemini-2.5-flash": Gemini25FlashTranscribeTS(),
         "gemini-3-flash-preview": Gemini3FlashTranscribeTS(),
         "gemini-2.5-flash-lite": Gemini25FlashLiteTranscribeTS(),
-        "gemini-3.1-flash-lite-preview": Gemini31FlashLitePreviewTranscribeTS(),
+        "gemini-3.1-flash-lite": Gemini31FlashLiteTranscribeTS(),
     }
     if engine_name not in engines:
         raise ValueError(
